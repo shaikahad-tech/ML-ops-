@@ -1,0 +1,37 @@
+replicaCount: 3
+image:
+  repository: mlops-api
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: true
+  host: mlops.local
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 500m
+  limits:
+    memory: 1Gi
+    cpu: 1000m
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilization: 70
+env:
+  MLFLOW_TRACKING_URI: "http://mlflow:5000"
+  MODEL_NAME: "churn-classifier"
+  MODEL_WARMUP_ON_START: "true"
+redis:
+  enabled: true
+  auth:
+    enabled: false
+mlflow:
+  enabled: true
+monitoring:
+  enabled: true
+  prometheus: true
+  grafana: true
