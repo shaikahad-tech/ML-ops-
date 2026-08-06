@@ -1,0 +1,48 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    ports: ["8000:8000"]
+    environment:
+      - MLFLOW_TRACKING_URI=sqlite:///mlflow.db
+      - MODEL_NAME=churn-classifier
+      - MODEL_WARMUP_ON_START=true
+    volumes:
+      - ../mlruns:/app/mlruns
+      - ../data:/app/data
+      - ../logs:/app/logs
+    depends_on: [mlflow, redis]
+    restart: unless-stopped
+  mlflow:
+    image: python:3.12-slim
+    ports: ["5000:5000"]
+    volumes: [../mlruns:/mlruns, ../mlflow.db:/mlflow.db]
+    command: bash -c "pip install mlflow && mlflow ui --backend-store-uri sqlite:///mlflow.db --host 0.0.0.0 --port 5000"
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: [redis-data:/data]
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+    volumes: [./prometheus.yml:/etc/prometheus/prometheus.yml, prometheus-data:/prometheus]
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3000:3000"]
+    environment: [GF_SECURITY_ADMIN_PASSWORD=admin]
+    volumes: [grafana-data:/var/lib/grafana]
+    depends_on: [prometheus]
+    restart: unless-stopped
+  train:
+    build: {context: .., dockerfile: docker/Dockerfile.train}
+    volumes: [../mlruns:/app/mlruns, ../data:/app/data]
+    profiles: ["train"]
+    command: ["pipeline", "--config", "configs/production.yaml"]
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:
