@@ -1,0 +1,26 @@
+# Lightweight config for smoke tests and CI — smaller model, fewer rows.
+seed: 42
+version: "ci"
+
+data:
+  n_samples: 800
+  test_size: 0.2
+  random_state: 42
+  churn_positive_rate: 0.265
+  data_dir: "data"
+
+model:
+  name: "random_forest"
+  n_estimators: 30
+  max_depth: 6
+  min_samples_split: 2
+  min_samples_leaf: 1
+  random_state: 42
+  class_weight: "balanced_subsample"
+
+train:
+  experiment_name: "churn-prediction-ci"
+  run_name: "ci-smoke"
+  tracking_uri: "file:./mlruns"
+  register_model: false
+  model_name: "churn-classifier-ci"

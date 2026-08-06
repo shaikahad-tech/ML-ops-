@@ -1,0 +1,26 @@
+# docker-compose for local development.
+# Brings up the API server with a shared MLflow tracking volume.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=file:./mlruns
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./data:/app/data
+    command: uvicorn mlops.serving.app:app --host 0.0.0.0 --port 8000
+
+  # Train once, then the api service can serve the registered model.
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./data:/app/data
+    command: python run.py train --config configs/default.yaml
+    profiles: ["train"]

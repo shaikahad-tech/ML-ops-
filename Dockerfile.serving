@@ -1,0 +1,23 @@
+# Multi-stage Dockerfile for the serving API.
+# Stage 1: train inside the image to produce a model artifact.
+# Stage 2: slim runtime that only serves.
+#
+#   docker build -t churn-api -f Dockerfile.serving .
+#   docker run -p 8000:8000 churn-api
+
+FROM python:3.12-slim AS builder
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN python run.py train --config configs/ci.yaml
+
+FROM python:3.12-slim AS runtime
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY --from=builder /app /app
+EXPOSE 8000
+CMD ["uvicorn", "mlops.serving.app:app", "--host", "0.0.0.0", "--port", "8000"]

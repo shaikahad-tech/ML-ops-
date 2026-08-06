@@ -1,0 +1,28 @@
+# Default configuration for the churn-prediction MLOps project.
+# Every value here can be overridden on the CLI: --seed, --run-name, etc.
+
+seed: 42
+version: "v1"
+
+data:
+  n_samples: 5000
+  test_size: 0.2
+  random_state: 42
+  churn_positive_rate: 0.265
+  data_dir: "data"
+
+model:
+  name: "random_forest"
+  n_estimators: 300
+  max_depth: 12
+  min_samples_split: 5
+  min_samples_leaf: 2
+  random_state: 42
+  class_weight: "balanced_subsample"
+
+train:
+  experiment_name: "churn-prediction"
+  run_name: "baseline"
+  tracking_uri: "file:./mlruns"
+  register_model: true
+  model_name: "churn-classifier"
