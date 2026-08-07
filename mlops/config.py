@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field, is_dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -55,13 +55,13 @@ class Config:
     train: TrainConfig = field(default_factory=TrainConfig)
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> "Config":
-        with open(path, "r", encoding="utf-8") as fh:
+    def from_yaml(cls, path: str | Path) -> Config:
+        with open(path, encoding="utf-8") as fh:
             raw: dict[str, Any] = yaml.safe_load(fh) or {}
         return cls.from_dict(raw)
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any]) -> "Config":
+    def from_dict(cls, raw: dict[str, Any]) -> Config:
         seed = raw.get("seed", 42)
         version = raw.get("version", "v1")
         data = DataConfig(**raw.get("data", {}))
@@ -105,11 +105,7 @@ def add_common_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """Shared CLI flags added to every subcommand."""
     parser.add_argument("--config", type=str, default=None, help="Path to a YAML config file.")
     parser.add_argument("--seed", type=int, default=None, help="Override the global random seed.")
-    parser.add_argument(
-        "--experiment-name", type=str, default=None, help="MLflow experiment name."
-    )
+    parser.add_argument("--experiment-name", type=str, default=None, help="MLflow experiment name.")
     parser.add_argument("--run-name", type=str, default=None, help="MLflow run name.")
-    parser.add_argument(
-        "--tracking-uri", type=str, default=None, help="MLflow tracking URI."
-    )
+    parser.add_argument("--tracking-uri", type=str, default=None, help="MLflow tracking URI.")
     return parser
