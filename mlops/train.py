@@ -99,6 +99,10 @@ def train(cfg: Config, train_path: str | Path, test_path: str | Path) -> dict:
         "n_test": len(test_df),
         **metrics,
     }
-    log.info("Training complete | run_id=%s | f1=%.4f | roc_auc=%.4f",
-             summary["run_id"], summary["f1"], summary["roc_auc"])
+    log.info(
+        "Training complete | run_id=%s | f1=%.4f | roc_auc=%.4f",
+        summary["run_id"],
+        summary["f1"],
+        summary["roc_auc"],
+    )
     return summary
