@@ -34,7 +34,9 @@ def generate_customer_data(cfg: Config) -> pd.DataFrame:
     num_support_calls = rng.integers(0, 8, size=n)
     num_products = rng.integers(1, 5, size=n)
 
-    contract_type = rng.choice(["Month-to-month", "One year", "Two year"], size=n, p=[0.55, 0.25, 0.20])
+    contract_type = rng.choice(
+        ["Month-to-month", "One year", "Two year"], size=n, p=[0.55, 0.25, 0.20]
+    )
     internet_service = rng.choice(["DSL", "Fiber optic", "No"], size=n, p=[0.34, 0.52, 0.14])
     payment_method = rng.choice(
         ["Electronic check", "Mailed check", "Bank transfer", "Credit card"],
