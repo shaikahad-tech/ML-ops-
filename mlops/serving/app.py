@@ -19,7 +19,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from mlops.data.preprocess import NUMERIC_FEATURES, CATEGORICAL_FEATURES
+from mlops.data.preprocess import CATEGORICAL_FEATURES, NUMERIC_FEATURES
 
 app = FastAPI(
     title="Customer Churn Prediction API",
@@ -53,6 +53,7 @@ def _load_model():
     """Load the model. Prefers the MLflow registry; falls back to a local path."""
     # Explicit override via env var MLOPS_MODEL_PATH for local dev / Docker.
     import os
+
     local_path = os.environ.get("MLOPS_MODEL_PATH")
     if local_path and Path(local_path).exists():
         return mlflow.sklearn.load_model(local_path), "local"
@@ -87,7 +88,7 @@ def predict(features: CustomerFeatures):
     try:
         model, version = get_model()
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Model not loaded: {exc}")
+        raise HTTPException(status_code=503, detail=f"Model not loaded: {exc}") from exc
 
     row = {k: [getattr(features, k)] for k in NUMERIC_FEATURES + CATEGORICAL_FEATURES}
     X = pd.DataFrame(row)
@@ -106,15 +107,14 @@ def predict_batch(rows: list[CustomerFeatures]):
     try:
         model, version = get_model()
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"Model not loaded: {exc}")
+        raise HTTPException(status_code=503, detail=f"Model not loaded: {exc}") from exc
 
     records = [r.model_dump() for r in rows]
     X = pd.DataFrame(records)[NUMERIC_FEATURES + CATEGORICAL_FEATURES]
     proba = model.predict_proba(X)[:, 1]
     return {
         "predictions": [
-            {"churn_probability": round(float(p), 4), "churn_label": int(p >= 0.5)}
-            for p in proba
+            {"churn_probability": round(float(p), 4), "churn_label": int(p >= 0.5)} for p in proba
         ],
         "model_version": str(version),
     }
