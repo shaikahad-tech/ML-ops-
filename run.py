@@ -25,6 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     # data
     p_data = sub.add_parser("data", help="Generate and split synthetic data.")
     from mlops.config import add_common_args
+
     add_common_args(p_data)
     p_data.add_argument("--n-samples", type=int, default=None, help="Override n_samples.")
     p_data.add_argument("--output-dir", type=str, default=None, help="Override data_dir.")
@@ -50,6 +51,7 @@ def main(argv: list[str] | None = None) -> int:
         from mlops.config import load_config
         from mlops.data.generate import generate_customer_data, save_data
         from mlops.logging_utils import setup_logging
+
         cfg = load_config(args)
         if getattr(args, "n_samples", None):
             cfg.data.n_samples = args.n_samples
@@ -81,6 +83,7 @@ def main(argv: list[str] | None = None) -> int:
 
     elif args.command == "serve":
         import uvicorn
+
         uvicorn.run(
             "mlops.serving.app:app",
             host=args.host,
