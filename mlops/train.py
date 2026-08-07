@@ -32,7 +32,11 @@ def evaluate_model(y_true, y_pred, y_prob) -> dict[str, float]:
         "f1": float(f1_score(y_true, y_pred, zero_division=0)),
     }
     try:
-        metrics["roc_auc"] = float(roc_auc_score(y_true, y_prob))
+        score = float(roc_auc_score(y_true, y_prob))
+        # roc_auc_score returns nan (not an exception) when only one class is present.
+        if score != score:  # NaN check
+            score = 0.5
+        metrics["roc_auc"] = score
     except ValueError:
         metrics["roc_auc"] = 0.5
     return metrics
