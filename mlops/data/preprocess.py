@@ -8,8 +8,6 @@ which guarantees train/serve feature parity.
 
 from __future__ import annotations
 
-from typing import List
-
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
@@ -18,7 +16,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from mlops.config import Config
 
-NUMERIC_FEATURES: List[str] = [
+NUMERIC_FEATURES: list[str] = [
     "tenure_months",
     "monthly_charges",
     "total_charges",
@@ -26,7 +24,7 @@ NUMERIC_FEATURES: List[str] = [
     "num_products",
 ]
 
-CATEGORICAL_FEATURES: List[str] = [
+CATEGORICAL_FEATURES: list[str] = [
     "contract_type",
     "internet_service",
     "payment_method",
