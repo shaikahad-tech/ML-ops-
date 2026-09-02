@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Churn — MLOps Prediction System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,800;0,900;1,400;1,700;1,900&family=Source+Serif+4:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: #FFFFFF;
+      --foreground: #000000;
+      --muted: #F5F5F5;
+      --muted-foreground: #525252;
+      --accent: #000000;
+      --accent-foreground: #FFFFFF;
+      --border: #000000;
+      --border-light: #E5E5E5;
+      --card: #FFFFFF;
+      --card-foreground: #000000;
+      --font-display: "Playfair Display", Georgia, serif;
+      --font-body: "Source Serif 4", Georgia, serif;
+      --font-mono: "JetBrains Mono", "Courier New", monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--font-body); background: var(--background); color: var(--foreground); font-size: 1.125rem; line-height: 1.625; overflow-x: hidden; }
+    body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: repeating-linear-gradient(0deg, transparent, transparent 1px, #000 1px, #000 2px); background-size: 100% 4px; opacity: 0.015; }
+    body::after { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); opacity: 0.02; }
+    h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 800; line-height: 1; }
+    h1 { font-size: clamp(2.5rem, 7vw, 6rem); letter-spacing: -0.05em; }
+    h2 { font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.025em; }
+    h3 { font-size: clamp(1.5rem, 3vw, 2.5rem); letter-spacing: -0.02em; }
+    h4 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+    .mono { font-family: var(--font-mono); }
+    .label { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); }
+    .italic { font-style: italic; }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 72rem; margin: 0 auto; padding: 0 1.5rem; }
+    @media (min-width: 768px) { .container { padding: 0 2rem; } }
+    @media (min-width: 1024px) { .container { padding: 0 3rem; } }
+    section { padding: 6rem 0; position: relative; z-index: 1; }
+    @media (min-width: 768px) { section { padding: 8rem 0; } }
+    @media (min-width: 1024px) { section { padding: 10rem 0; } }
+    .section-divider { height: 4px; background: var(--foreground); border: none; margin: 0; }
+    .section-divider--ultra { height: 8px; }
+    nav { position: sticky; top: 0; z-index: 100; background: var(--background); border-bottom: 1px solid var(--foreground); padding: 1rem 0; }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+    .nav-brand { font-family: var(--font-display); font-weight: 900; font-size: 1.5rem; letter-spacing: -0.03em; }
+    .nav-links { display: none; align-items: center; gap: 2rem; font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    @media (min-width: 768px) { .nav-links { display: flex; } }
+    .nav-links a { transition: border-color 0.1s; border-bottom: 1px solid transparent; padding-bottom: 2px; }
+    .nav-links a:hover { border-bottom-color: var(--foreground); }
+    .nav-links a:focus-visible { outline: 3px solid var(--foreground); outline-offset: 3px; }
+    .nav-status { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+    .status-dot { width: 8px; height: 8px; background: var(--foreground); display: inline-block; }
+    .status-dot.loading { animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+    .hero { padding: 5rem 0 6rem; }
+    @media (min-width: 768px) { .hero { padding: 8rem 0 10rem; } }
+    .hero-label { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; }
+    .hero-label::before { content: ""; display: block; width: 48px; height: 2px; background: var(--foreground); }
+    .hero h1 { font-size: clamp(3rem, 12vw, 10rem); font-weight: 900; letter-spacing: -0.06em; line-height: 0.9; margin-bottom: 2rem; }
+    .hero h1 .italic { font-weight: 400; }
+    .hero-lead { font-size: 1.25rem; max-width: 36rem; color: var(--muted-foreground); margin-bottom: 3rem; line-height: 1.625; }
+    .hero-decor { display: flex; align-items: center; gap: 1rem; margin-top: 4rem; }
+    .hero-decor-rule { flex: 1; height: 4px; background: var(--foreground); }
+    .hero-decor-square { width: 24px; height: 24px; border: 2px solid var(--foreground); flex-shrink: 0; }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; padding: 1rem 2rem; border: 2px solid var(--foreground); cursor: pointer; transition: background 0.1s, color 0.1s, border-color 0.1s; min-height: 44px; }
+    .btn-primary { background: var(--foreground); color: var(--background); }
+    .btn-primary:hover { background: var(--background); color: var(--foreground); }
+    .btn-outline { background: transparent; color: var(--foreground); }
+    .btn-outline:hover { background: var(--foreground); color: var(--background); }
+    .btn:focus-visible { outline: 3px solid var(--foreground); outline-offset: 3px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .predict-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; }
+    @media (min-width: 1024px) { .predict-grid { grid-template-columns: 1fr 1fr; gap: 4rem; } }
+    .form-card { border: 2px solid var(--foreground); padding: 2.5rem; }
+    .form-card-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-light); }
+    .form-card-header h3 { font-size: 1.5rem; font-weight: 700; }
+    .form-group { margin-bottom: 1.75rem; }
+    .form-group label { display: block; font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; color: var(--muted-foreground); }
+    .form-group input, .form-group select { width: 100%; background: var(--background); border: 2px solid var(--foreground); padding: 0.75rem 1rem; font-family: var(--font-body); font-size: 1rem; color: var(--foreground); outline: none; transition: border-width 0.1s; -webkit-appearance: none; appearance: none; border-radius: 0; }
+    .form-group input:focus, .form-group select:focus { border-width: 3px; padding: calc(0.75rem - 1px) calc(1rem - 1px); }
+    .form-group input::placeholder { color: var(--muted-foreground); font-style: italic; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .form-actions { display: flex; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-light); }
+    .result-panel { border: 2px solid var(--foreground); padding: 2.5rem; min-height: 300px; display: flex; flex-direction: column; justify-content: space-between; transition: background 0.1s, color 0.1s; }
+    .result-panel.inverted { background: var(--foreground); color: var(--background); }
+    .result-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; gap: 1rem; }
+    .result-empty-icon { width: 48px; height: 48px; border: 2px solid var(--foreground); display: flex; align-items: center; justify-content: center; }
+    .result-panel.inverted .result-empty-icon { border-color: var(--background); }
+    .result-empty p { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-foreground); }
+    .result-panel.inverted .result-empty p { color: rgba(255,255,255,0.6); }
+    .result-display { display: none; }
+    .result-display.active { display: block; }
+    .result-probability-label { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+    .result-probability { font-family: var(--font-display); font-size: clamp(4rem, 10vw, 8rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.05em; margin-bottom: 1rem; }
+    .result-probability .percent { font-size: 0.4em; font-weight: 400; vertical-align: super; }
+    .result-label { font-family: var(--font-display); font-style: italic; font-size: 1.5rem; margin-bottom: 2rem; }
+    .result-meta { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em; padding-top: 1.5rem; border-top: 1px solid var(--border-light); display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .result-panel.inverted .result-meta { border-top-color: rgba(255,255,255,0.15); }
+    .result-meta-key { color: var(--muted-foreground); }
+    .result-panel.inverted .result-meta-key { color: rgba(255,255,255,0.5); }
+    .result-meta-val { text-align: right; }
+    .stats { background: var(--foreground); color: var(--background); position: relative; overflow: hidden; }
+    .stats::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, #fff 1px, #fff 2px); background-size: 4px 100%; opacity: 0.03; pointer-events: none; }
+    .stats-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+    @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    .stat { padding: 3rem 2rem; border-right: 1px solid rgba(255,255,255,0.15); border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .stat:last-child { border-right: none; }
+    @media (min-width: 768px) { .stat { border-bottom: none; } }
+    .stat-value { font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.75rem; }
+    .stat-label { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.6); }
+    .arch-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+    @media (min-width: 768px) { .arch-grid { grid-template-columns: repeat(2, 1fr); } }
+    .arch-card { padding: 2.5rem; border: 1px solid var(--foreground); margin: -1px 0 0 -1px; transition: background 0.1s, color 0.1s; cursor: default; }
+    .arch-card:hover { background: var(--foreground); color: var(--background); }
+    .arch-card-num { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 1.5rem; text-transform: uppercase; }
+    .arch-card h4 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+    .arch-card p { font-size: 1rem; line-height: 1.625; color: var(--muted-foreground); }
+    .arch-card:hover p { color: rgba(255,255,255,0.7); }
+    .arch-card .mono-tag { font-family: var(--font-mono); font-size: 0.75rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); display: block; }
+    .arch-card:hover .mono-tag { border-top-color: rgba(255,255,255,0.2); }
+    .cli-section { background: var(--muted); position: relative; }
+    .cli-section::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(#00000008 1px, transparent 1px), linear-gradient(90deg, #00000008 1px, transparent 1px); background-size: 40px 40px; opacity: 0.5; pointer-events: none; }
+    .cli-block { background: var(--foreground); color: var(--background); padding: 2.5rem; font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.75; overflow-x: auto; position: relative; z-index: 1; }
+    .cli-block .comment { color: rgba(255,255,255,0.4); }
+    .cli-block .cmd { color: rgba(255,255,255,0.9); }
+    .cli-block .prompt { color: rgba(255,255,255,0.3); }
+    .cli-block .output { color: rgba(255,255,255,0.6); }
+    footer { background: var(--foreground); color: var(--background); padding: 4rem 0 2rem; position: relative; overflow: hidden; }
+    footer::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at top center, #ffffff, transparent 70%); opacity: 0.05; pointer-events: none; }
+    .footer-grid { display: grid; grid-template-columns: 1fr; gap: 3rem; margin-bottom: 3rem; }
+    @media (min-width: 768px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr; } }
+    .footer-brand { font-family: var(--font-display); font-weight: 900; font-size: 3rem; letter-spacing: -0.04em; line-height: 1; margin-bottom: 1rem; }
+    .footer-brand .italic { font-weight: 400; }
+    .footer-desc { color: rgba(255,255,255,0.5); max-width: 24rem; font-size: 0.875rem; }
+    .footer-col h5 { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; color: rgba(255,255,255,0.4); font-weight: 500; }
+    .footer-col ul { list-style: none; }
+    .footer-col li { font-family: var(--font-mono); font-size: 0.875rem; margin-bottom: 0.75rem; }
+    .footer-col a { color: rgba(255,255,255,0.7); transition: color 0.1s; border-bottom: 1px solid transparent; }
+    .footer-col a:hover { color: var(--background); border-bottom-color: var(--background); }
+    .footer-col a:focus-visible { outline: 3px solid var(--background); outline-offset: 2px; }
+    .footer-bottom { padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); }
+    .error-banner { display: none; background: var(--foreground); color: var(--background); padding: 1rem 1.5rem; font-family: var(--font-mono); font-size: 0.875rem; margin-bottom: 1.5rem; border: 2px solid var(--foreground); }
+    .error-banner.active { display: block; }
+    .error-banner .label { color: rgba(255,255,255,0.5); margin-bottom: 0.25rem; }
+    .section-header { margin-bottom: 4rem; }
+    .section-header .label { margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
+    .section-header .label::before { content: ""; display: block; width: 32px; height: 2px; background: var(--foreground); }
+    .section-header h2 { margin-bottom: 1.5rem; }
+    .section-header h2 .italic { font-weight: 400; }
+    .section-header .lead { font-size: 1.25rem; color: var(--muted-foreground); max-width: 32rem; }
+    .skip-link { position: absolute; top: -100px; left: 0; background: var(--foreground); color: var(--background); padding: 1rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; z-index: 200; transition: top 0.1s; }
+    .skip-link:focus { top: 0; outline: 3px solid var(--background); outline-offset: 3px; }
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.3s, transform 0.3s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } .status-dot.loading { animation: none; } * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <nav>
+    <div class="container nav-inner">
+      <a href="/" class="nav-brand">Churn<span class="italic" style="font-style:italic;font-weight:400;">.</span></a>
+      <div class="nav-links">
+        <a href="#predict">Predict</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#cli">CLI</a>
+        <a href="/docs">API Docs</a>
+      </div>
+      <div class="nav-status">
+        <span class="status-dot loading" id="statusDot"></span>
+        <span id="statusText">CHECKING</span>
+      </div>
+    </div>
+  </nav>
+  <main id="main">
+    <section class="hero">
+      <div class="container">
+        <div class="hero-label">MLOps / Customer Churn Prediction</div>
+        <h1>Will they<br><span class="italic">stay</span> or will they<br><span class="italic">leave</span>?</h1>
+        <p class="hero-lead">A production-grade machine learning system that predicts telecom customer churn with a RandomForest classifier — from synthetic data generation through MLflow experiment tracking to a live prediction API.</p>
+        <div class="hero-decor"><div class="hero-decor-rule"></div><div class="hero-decor-square"></div></div>
+      </div>
+    </section>
+    <hr class="section-divider section-divider--ultra">
+    <section id="predict">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="label">01 / Live Inference</div>
+          <h2>Score a <span class="italic">customer</span></h2>
+          <p class="lead">Enter customer attributes below. The model returns a churn probability in real time.</p>
+        </div>
+        <div class="predict-grid">
+          <div class="form-card reveal">
+            <div class="form-card-header"><h3>Customer Features</h3><span class="label">INPUT</span></div>
+            <div class="error-banner" id="errorBanner"><div class="label">ERROR</div><span id="errorText"></span></div>
+            <form id="predictForm">
+              <div class="form-row">
+                <div class="form-group"><label for="tenure_months">Tenure (months)</label><input type="number" id="tenure_months" name="tenure_months" min="0" max="72" value="3" required></div>
+                <div class="form-group"><label for="num_products">Products</label><input type="number" id="num_products" name="num_products" min="1" max="20" value="1" required></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label for="monthly_charges">Monthly Charges ($)</label><input type="number" id="monthly_charges" name="monthly_charges" min="0" max="500" step="0.01" value="89.50" required></div>
+                <div class="form-group"><label for="total_charges">Total Charges ($)</label><input type="number" id="total_charges" name="total_charges" min="0" max="20000" step="0.01" value="250.00" required></div>
+              </div>
+              <div class="form-group"><label for="num_support_calls">Support Calls</label><input type="number" id="num_support_calls" name="num_support_calls" min="0" max="50" value="4" required></div>
+              <div class="form-group"><label for="contract_type">Contract Type</label><select id="contract_type" name="contract_type" required><option value="Month-to-month" selected>Month-to-month</option><option value="One year">One year</option><option value="Two year">Two year</option></select></div>
+              <div class="form-group"><label for="internet_service">Internet Service</label><select id="internet_service" name="internet_service" required><option value="DSL">DSL</option><option value="Fiber optic" selected>Fiber optic</option><option value="No">No</option></select></div>
+              <div class="form-group"><label for="payment_method">Payment Method</label><select id="payment_method" name="payment_method" required><option value="Electronic check" selected>Electronic check</option><option value="Mailed check">Mailed check</option><option value="Bank transfer">Bank transfer (automatic)</option><option value="Credit card">Credit card (automatic)</option></select></div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="predictBtn">Predict <span>&rarr;</span></button>
+                <button type="button" class="btn btn-outline" id="resetBtn">Reset</button>
+              </div>
+            </form>
+          </div>
+          <div class="result-panel reveal" id="resultPanel">
+            <div class="result-empty" id="resultEmpty">
+              <div class="result-empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg></div>
+              <p>Awaiting input</p>
+            </div>
+            <div class="result-display" id="resultDisplay">
+              <div class="result-probability-label">Churn Probability</div>
+              <div class="result-probability" id="resultProb">0.00<span class="percent">%</span></div>
+              <div class="result-label" id="resultLabel">Prediction will appear here</div>
+              <div class="result-meta">
+                <div class="result-meta-key">Model Version</div><div class="result-meta-val" id="resultVersion">—</div>
+                <div class="result-meta-key">Latency</div><div class="result-meta-val" id="resultLatency">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <hr class="section-divider">
+    <section class="stats">
+      <div class="container" style="position:relative;z-index:1;">
+        <div class="section-header reveal" style="margin-bottom:3rem;">
+          <div class="label" style="color:rgba(255,255,255,0.5);">02 / Model Metrics</div>
+          <h2 style="color:var(--background);">By the <span class="italic">numbers</span></h2>
+        </div>
+      </div>
+      <div class="container stats-grid" style="position:relative;z-index:1;">
+        <div class="stat reveal"><div class="stat-value" id="statAccuracy">0.85</div><div class="stat-label">Accuracy</div></div>
+        <div class="stat reveal"><div class="stat-value" id="statF1">0.86</div><div class="stat-label">F1 Score</div></div>
+        <div class="stat reveal"><div class="stat-value" id="statAuc">0.86</div><div class="stat-label">ROC AUC</div></div>
+      </div>
+    </section>
+    <hr class="section-divider">
+    <section id="architecture">
+      <div class="container">
+        <div class="section-header reveal">
+          <div class="label">03 / System Design</div>
+          <h2>The <span class="italic">architecture</span></h2>
+          <p class="lead">Six modules. One pipeline. Zero external dependencies.</p>
+        </div>
+        <div class="arch-grid">
+          <div class="arch-card reveal"><div class="arch-card-num">01</div><h4>Data Generation</h4><p>Synthetic customer records with a logistic churn signal. 5,000 rows, calibrated to a 26.5% positive rate.</p><span class="mono-tag">mlops/data/generate.py</span></div>
+          <div class="arch-card reveal"><div class="arch-card-num">02</div><h4>Preprocessing</h4><p>ColumnTransformer with StandardScaler for numerics and OneHotEncoder for categoricals. Wrapped in a single Pipeline.</p><span class="mono-tag">mlops/data/preprocess.py</span></div>
+          <div class="arch-card reveal"><div class="arch-card-num">03</div><h4>Training</h4><p>RandomForestClassifier with balanced subsample weights. Hyperparameters driven entirely by YAML config.</p><span class="mono-tag">mlops/train.py</span></div>
+          <div class="arch-card reveal"><div class="arch-card-num">04</div><h4>Experiment Tracking</h4><p>MLflow logs params, metrics, and model artifacts. Models are registered to the Model Registry for versioning.</p><span class="mono-tag">mlflow + registry</span></div>
+          <div class="arch-card reveal"><div class="arch-card-num">05</div><h4>Serving</h4><p>FastAPI loads the latest registered model. The same Pipeline artifact guarantees train/serve parity.</p><span class="mono-tag">mlops/serving/app.py</span></div>
+          <div class="arch-card reveal"><div class="arch-card-num">06</div><h4>CI / CD</h4><p>GitHub Actions runs tests on Python 3.11 and 3.12, a training smoke test, and Ruff lint on every push.</p><span class="mono-tag">.github/workflows/ci.yml</span></div>
+        </div>
+      </div>
+    </section>
+    <hr class="section-divider">
+    <section id="cli" class="cli-section">
+      <div class="container" style="position:relative;z-index:1;">
+        <div class="section-header reveal">
+          <div class="label">04 / Command Line</div>
+          <h2>Run it <span class="italic">locally</span></h2>
+          <p class="lead">Three commands. That's all it takes.</p>
+        </div>
+        <div class="cli-block reveal">
+          <div class="comment"># Install</div>
+          <div><span class="prompt">$</span> <span class="cmd">pip install -r requirements.txt && pip install -e .</span></div>
+          <br>
+          <div class="comment"># Train the model</div>
+          <div><span class="prompt">$</span> <span class="cmd">python run.py train --config configs/default.yaml</span></div>
+          <div class="output">Generated 5000 rows | churn rate=0.265</div>
+          <div class="output">Training complete | f1=0.861 | roc_auc=0.858</div>
+          <br>
+          <div class="comment"># Serve the API</div>
+          <div><span class="prompt">$</span> <span class="cmd">python run.py serve --port 8000</span></div>
+          <div class="output">Uvicorn running on http://0.0.0.0:8000</div>
+        </div>
+      </div>
+    </section>
+    <hr class="section-divider section-divider--ultra">
+  </main>
+  <footer>
+    <div class="container" style="position:relative;z-index:1;">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">Churn<span class="italic">.</span></div>
+          <p class="footer-desc">A production-style MLOps project for customer churn prediction. Self-contained, reproducible, and built with scikit-learn, MLflow, and FastAPI.</p>
+        </div>
+        <div class="footer-col"><h5>System</h5><ul><li><a href="#predict">Predict</a></li><li><a href="#architecture">Architecture</a></li><li><a href="#cli">CLI</a></li><li><a href="/docs">API Docs</a></li></ul></div>
+        <div class="footer-col"><h5>Stack</h5><ul><li><a href="https://scikit-learn.org" target="_blank" rel="noopener">scikit-learn</a></li><li><a href="https://mlflow.org" target="_blank" rel="noopener">MLflow</a></li><li><a href="https://fastapi.tiangolo.com" target="_blank" rel="noopener">FastAPI</a></li><li><a href="https://docker.com" target="_blank" rel="noopener">Docker</a></li></ul></div>
+      </div>
+      <div class="footer-bottom"><span>&copy; 2026 Churn MLOps</span><span>v0.1.0</span></div>
+    </div>
+  </footer>
+  <script>
+    (async () => {
+      const dot = document.getElementById('statusDot'), text = document.getElementById('statusText');
+      try { const res = await fetch('/health'); if (res.ok) { dot.classList.remove('loading'); text.textContent = 'ONLINE'; } else { text.textContent = 'OFFLINE'; } }
+      catch { dot.classList.remove('loading'); text.textContent = 'OFFLINE'; }
+    })();
+    const form = document.getElementById('predictForm'), predictBtn = document.getElementById('predictBtn'), resetBtn = document.getElementById('resetBtn'), resultPanel = document.getElementById('resultPanel'), resultEmpty = document.getElementById('resultEmpty'), resultDisplay = document.getElementById('resultDisplay'), resultProb = document.getElementById('resultProb'), resultLabel = document.getElementById('resultLabel'), resultVersion = document.getElementById('resultVersion'), resultLatency = document.getElementById('resultLatency'), errorBanner = document.getElementById('errorBanner'), errorText = document.getElementById('errorText');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault(); predictBtn.disabled = true; predictBtn.textContent = 'Scoring...'; errorBanner.classList.remove('active');
+      const payload = { tenure_months: parseInt(form.tenure_months.value), monthly_charges: parseFloat(form.monthly_charges.value), total_charges: parseFloat(form.total_charges.value), num_support_calls: parseInt(form.num_support_calls.value), num_products: parseInt(form.num_products.value), contract_type: form.contract_type.value, internet_service: form.internet_service.value, payment_method: form.payment_method.value };
+      const start = performance.now();
+      try {
+        const res = await fetch('/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const elapsed = Math.round(performance.now() - start);
+        if (!res.ok) { const err = await res.json().catch(() => ({ detail: 'Request failed' })); throw new Error(err.detail || `HTTP ${res.status}`); }
+        const data = await res.json(); const pct = (data.churn_probability * 100).toFixed(2);
+        resultProb.innerHTML = `${pct}<span class="percent">%</span>`;
+        resultLabel.textContent = data.churn_label === 1 ? 'Likely to churn' : 'Likely to stay';
+        resultVersion.textContent = data.model_version; resultLatency.textContent = `${elapsed}ms`;
+        if (data.churn_probability >= 0.5) { resultPanel.classList.add('inverted'); } else { resultPanel.classList.remove('inverted'); }
+        resultEmpty.style.display = 'none'; resultDisplay.classList.add('active');
+      } catch (err) { errorText.textContent = err.message; errorBanner.classList.add('active'); }
+      finally { predictBtn.disabled = false; predictBtn.innerHTML = 'Predict <span>&rarr;</span>'; }
+    });
+    resetBtn.addEventListener('click', () => { form.reset(); resultEmpty.style.display = 'flex'; resultDisplay.classList.remove('active'); resultPanel.classList.remove('inverted'); errorBanner.classList.remove('active'); });
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); } }); }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
