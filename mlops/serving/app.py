@@ -5,6 +5,8 @@ registry (or a local artifact path) and exposes ``/predict`` and ``/health``
 endpoints. The same ``Pipeline`` used in training is served, so feature
 preprocessing is identical between train and serve.
 
+Also serves a Minimalist Monochrome web UI at ``/`` for interactive predictions.
+
 Run:
     uvicorn mlops.serving.app:app --host 0.0.0.0 --port 8000 --reload
 """
@@ -17,6 +19,8 @@ from typing import Literal
 import mlflow
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from mlops.data.preprocess import CATEGORICAL_FEATURES, NUMERIC_FEATURES
@@ -26,6 +30,24 @@ app = FastAPI(
     description="Scores a single customer (or batch) for churn probability.",
     version="0.1.0",
 )
+
+# ── Serve the web UI ──────────────────────────────────────────────
+_STATIC_DIR = Path(__file__).parent / "static"
+if _STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    """Serve the Minimalist Monochrome prediction UI."""
+    index_path = _STATIC_DIR / "index.html"
+    if index_path.exists():
+        return HTMLResponse(content=index_path.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        content="<h1>Churn Prediction API</h1><p>Web UI not found. Use /docs for API.</p>",
+        status_code=200,
+    )
+
 
 _MODEL = None
 
